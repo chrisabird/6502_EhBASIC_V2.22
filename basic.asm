@@ -419,7 +419,7 @@ LAB_SKFE		= LAB_STAK+$FE
 LAB_SKFF		= LAB_STAK+$FF
 					; flushed stack address
 
-ccflag		= $0200	; BASIC CTRL-C flag, 00 = enabled, 01 = dis
+ccflag		= $0300	; BASIC CTRL-C flag, 00 = enabled, 01 = dis
 ccbyte		= ccflag+1	; BASIC CTRL-C byte
 ccnull		= ccbyte+1	; BASIC CTRL-C byte timeout
 
@@ -436,13 +436,18 @@ Ibuffs		= IRQ_vec+$14
 					; start of input buffer after IRQ/NMI code
 Ibuffe		= Ibuffs+$47; end of input buffer
 
-Ram_base		= $0300	; start of user RAM (set as needed, should be page aligned)
-Ram_top		= $C000	; end of user RAM+1 (set as needed, should be page aligned)
+Ram_base		= $0400	; start of user RAM (set as needed, should be page aligned)
+Ram_top		= $5000	; end of user RAM+1 (set as needed, should be page aligned)
 
 ; This start can be changed to suit your system
 
-	*=	$C000
+	.org	$5000
 
+; For convenience, put jump here to reset location so it can be
+; run from the load address.
+
+JMP	RES_vec
+        
 ; BASIC cold start entry point
 
 ; new page 2 initialisation, copy block to ccflag on
@@ -1555,7 +1560,7 @@ LAB_1602
 	JMP	LAB_LET		; else go do implied LET
 
 LAB_1609
-	CMP	#[TK_TAB-$80]*2	; compare normalised token * 2 with TAB
+	CMP	#(TK_TAB-$80)*2	; compare normalised token * 2 with TAB
 	BCS	LAB_15D9		; branch if A>=TAB (do syntax error then warm start)
 					; only tokens before TAB can start a line
 	TAY				; copy to index

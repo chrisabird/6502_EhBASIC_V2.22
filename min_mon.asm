@@ -14,7 +14,7 @@ NMI_vec	= IRQ_vec+$0A	; NMI code vector
 
 ; setup for the 6502 simulator environment
 
-IO_AREA	= $F000		; set I/O area for this monitor
+IO_AREA	= $6000		; set I/O area for this monitor
 
 ACIAsimwr	= IO_AREA+$01	; simulated ACIA write port
 ACIAsimrd	= IO_AREA+$04	; simulated ACIA read port
@@ -23,7 +23,7 @@ ACIAsimrd	= IO_AREA+$04	; simulated ACIA read port
 ; and wait for the user to select [C]old or [W]arm start. nothing else
 ; fits in less than 128 bytes
 
-	*=	$FF80			; pretend this is in a 1/8K ROM
+	.org	$FF80; pretend this is in a 1/8K ROM
 
 ; reset vector points here
 
@@ -126,7 +126,7 @@ LAB_mess
 
 ; system vectors
 
-	*=	$FFFA
+	.org $FFFA
 
 	.word	NMI_vec		; NMI vector
 	.word	RES_vec		; RESET vector
