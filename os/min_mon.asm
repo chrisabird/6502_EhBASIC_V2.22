@@ -12,26 +12,34 @@
 IRQ_vec	= VEC_SV+2		; IRQ code vector
 NMI_vec	= IRQ_vec+$0A	; NMI code vector
 
+
+ACIAdat = $5000
+ACIAsta = $5001
+ACIAcmd = $5002
+ACIActl = $5003
+
 ; setup for the 6502 simulator environment
-
-IO_AREA	= $6000		; set I/O area for this monitor
-
-ACIAsimwr	= IO_AREA+$01	; simulated ACIA write port
-ACIAsimrd	= IO_AREA+$04	; simulated ACIA read port
 
 ; now the code. all this does is set up the vectors and interrupt code
 ; and wait for the user to select [C]old or [W]arm start. nothing else
 ; fits in less than 128 bytes
 
-	.org	$FF80; pretend this is in a 1/8K ROM
+.segment "OS"
 
 ; reset vector points here
+
+ACIA_init
+	LDA #$1F
+	STA ACIActl
+	LDA #$0B
+	STA ACIAcmd
+	rts
 
 RES_vec
 	CLD				; clear decimal mode
 	LDX	#$FF			; empty stack
 	TXS				; set the stack
-
+	JSR	ACIA_init
 ; set up vectors and interrupt code, copy them to page 2
 
 	LDY	#END_CODE-LAB_vec	; set index/count
@@ -67,23 +75,28 @@ LAB_nokey
 LAB_dowarm
 	JMP	LAB_WARM		; do EhBASIC warm start
 
-; byte out to simulated ACIA
-
+; byte out to ACIA routine
 ACIAout
-	STA	ACIAsimwr		; save byte to simulated ACIA
+	PHA
+ACIAoutretry
+	LDA ACIAsta
+	AND #$10
+	BEQ ACIAoutretry
+	PLA
+	STA	ACIAdat		; save byte to simulated ACIA
 	RTS
 
-; byte in from simulated ACIA
-
+; get character from ACIA routine
 ACIAin
-	LDA	ACIAsimrd		; get byte from simulated ACIA
-	BEQ	LAB_nobyw		; branch if no byte waiting
-
+	CLC
+	LDA	ACIAsta		; get byte from simulated ACIA
+	AND #$08
+	BEQ	ACIAinend	; branch if no byte waiting
+	LDA ACIAdat
 	SEC				; flag byte received
+ACIAinend
 	RTS
 
-LAB_nobyw
-	CLC				; flag no byte received
 no_load				; empty load vector for EhBASIC
 no_save				; empty save vector for EhBASIC
 	RTS
@@ -106,16 +119,7 @@ IRQ_CODE
 	STA	IrqBase		; save the new IRQ flag byte
 	PLA				; restore A
 	RTI
-
-; EhBASIC NMI support
-
 NMI_CODE
-	PHA				; save A
-	LDA	NmiBase		; get the NMI flag byte
-	LSR				; shift the set b7 to b6, and on down ...
-	ORA	NmiBase		; OR the original back in
-	STA	NmiBase		; save the new NMI flag byte
-	PLA				; restore A
 	RTI
 
 END_CODE
@@ -126,7 +130,7 @@ LAB_mess
 
 ; system vectors
 
-	.org $FFFA
+.segment "VECTORS"
 
 	.word	NMI_vec		; NMI vector
 	.word	RES_vec		; RESET vector
