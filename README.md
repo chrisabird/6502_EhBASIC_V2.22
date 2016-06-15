@@ -2,9 +2,9 @@
 
 Software for the sbc65 single board computer
 
-os - Minimal monitor & ehbasic build
-via_test - Outputs a simple test partern onto the VIA I/O
-acia_test - Repeatidly sends a single character over the UART port from the ACIA
+ * os - Minimal monitor & ehbasic build
+ * via_test - Outputs a simple test partern onto the VIA I/O
+ * acia_test - Repeatidly sends a single character over the UART port from the ACIA
 
 ## Dependencies 
  
