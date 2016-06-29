@@ -419,7 +419,7 @@ LAB_SKFE		= LAB_STAK+$FE
 LAB_SKFF		= LAB_STAK+$FF
 					; flushed stack address
 
-ccflag		= $0300	; BASIC CTRL-C flag, 00 = enabled, 01 = dis
+ccflag		= $0200	; BASIC CTRL-C flag, 00 = enabled, 01 = dis
 ccbyte		= ccflag+1	; BASIC CTRL-C byte
 ccnull		= ccbyte+1	; BASIC CTRL-C byte timeout
 
@@ -436,12 +436,13 @@ Ibuffs		= IRQ_vec+$14
 					; start of input buffer after IRQ/NMI code
 Ibuffe		= Ibuffs+$47; end of input buffer
 
-Ram_base		= $0400	; start of user RAM (set as needed, should be page aligned)
+Ram_base		= $0300	; start of user RAM (set as needed, should be page aligned)
 Ram_top		= $8000	; end of user RAM+1 (set as needed, should be page aligned)
 
 ; This start can be changed to suit your system
 
 ;	.org	$8000
+.segment "CODE"
 
 ; For convenience, put jump here to reset location so it can be
 ; run from the load address.

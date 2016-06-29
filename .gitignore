@@ -218,3 +218,5 @@ pip-log.txt
 *.o
 *.lst
 *.map
+firmware
+_autosave*

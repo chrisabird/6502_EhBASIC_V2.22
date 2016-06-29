@@ -29,6 +29,8 @@ ACIActl = $5003
 ; reset vector points here
 
 ACIA_init
+	LDA #$00
+	STA ACIAsta
 	LDA #$1F
 	STA ACIActl
 	LDA #$0B
@@ -61,7 +63,10 @@ LAB_signon
 
 LAB_nokey
 	JSR	V_INPT		; call scan input device
+
 	BCC	LAB_nokey		; loop if no key
+	
+	JSR V_OUTP
 
 	AND	#$DF			; mask xx0x xxxx, ensure upper case
 	CMP	#'W'			; compare with [W]arm start
@@ -79,11 +84,9 @@ LAB_dowarm
 ACIAout
 	PHA
 ACIAoutretry
-	LDA ACIAsta
-	AND #$10
-	BEQ ACIAoutretry
 	PLA
 	STA	ACIAdat		; save byte to simulated ACIA
+	JSR ACIAwait
 	RTS
 
 ; get character from ACIA routine
@@ -96,6 +99,30 @@ ACIAin
 	SEC				; flag byte received
 ACIAinend
 	RTS
+
+ACIAwait
+	PHY
+	PHX
+
+ACIAdelayloop
+	LDY #2
+
+DELAY_LOOP
+  LDY   #2    ;Get delay value (clock rate in MHz 2 clock cycles)
+
+MINIDLY
+  LDX   #$68      ;Seed X reg
+
+DELAY_1
+  DEX         ;Decrement low index
+  BNE   DELAY_1   ;Loop back until done
+  DEY         ;Decrease by one
+  BNE   MINIDLY   ;Loop until done
+  PLX         ;Restore X Reg
+  PLY         ;Restore Y Reg
+
+DELAY_DONE
+  RTS         ;Delay done, return
 
 no_load				; empty load vector for EhBASIC
 no_save				; empty save vector for EhBASIC
@@ -120,6 +147,12 @@ IRQ_CODE
 	PLA				; restore A
 	RTI
 NMI_CODE
+	PHA				; save A
+	LDA	NmiBase		; get the NMI flag byte
+	LSR				; shift the set b7 to b6, and on down ...
+	ORA	NmiBase		; OR the original back in
+	STA	NmiBase		; save the new NMI flag byte
+	PLA				; restore A
 	RTI
 
 END_CODE
