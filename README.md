@@ -24,11 +24,15 @@ Software for the sbc65 single board computer
 |MXO45-3C-1M0000|1MHZ Oscillator DIP-14|1|
 |DS1813-10+|Supervisory Circuits 5V EconoReset w/Pushbutton|1|
 |N/A|1.8942MHz Crystal|1|
-|CP2102|USB to UART Board| 
+|CP2102|USB to UART Board|1| 
 |TXB0104|Voltage Levels 4-Bit Bi-directional V-Level Translator|1|
-|100nf|100nf Ceramic Capacitor|10|
+|100nf|100nf Ceramic Capacitor|16|
 |10uf|10uf Capacitor|2|
-|3K3|3.3K ohm resistors|10|
+|22pf|22pf Ceramic Capacitor|1|
+|3K3|3.3K ohm resistors|5|
+|N/A|14 pin DIP Socket|2|
+|N/A|40 pin DIP Socket|2|
+|N/A|28 pin DIP Socket|3|
 
 Please note that while WDC also make a version of the 65C51 code here is optimised to work for the Rockwell version as the WDC has a number of bugs that make it unusable. 
 
