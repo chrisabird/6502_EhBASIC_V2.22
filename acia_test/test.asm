@@ -1,48 +1,27 @@
 .segment "OS"
 
-ACIADATA = $5000       	
-ACIACONTROL = $5003    	
-ACIACOMMAND = $5002   	
-ACIASTATUS = $5001   		
+ACIA_data = $5000       	
+ACIA_control = $5003    	
+ACIA_command = $5002   	
+ACIA_status = $5001   		
 
 NMI_VEC 
 IRQ_VEC
 START
 	LDX #$FF
 	TXS
-	LDA #$00
-	STA ACIASTATUS
 	LDA #$1F							
-	STA ACIACONTROL       
+	STA ACIA_control
 	LDA #$0B              
-	STA ACIACOMMAND      
+	STA ACIA_command     
 
 LOOP
+	LDA ACIA_status
+	AND #$10
+	BEQ LOOP
 	LDA #$41              
-	STA ACIADATA         
-	JSR WAIT_6551
+	STA ACIA_data      
 	JMP LOOP     
-
-WAIT_6551
-	PHY      ;Save Y Reg
-	PHX      ;Save X Reg
-
-DELAY_LOOP   
-	LDY   #2    ;Get delay value (clock rate in MHz 2 clock cycles)
-
-MINIDLY   
-	LDX   #$68      ;Seed X reg
-
-DELAY_1      
-	DEX         ;Decrement low index
-	BNE   DELAY_1   ;Loop back until done
-	DEY         ;Decrease by one
-	BNE   MINIDLY   ;Loop until done
-	PLX         ;Restore X Reg
-	PLY         ;Restore Y Reg
-
-DELAY_DONE   
-	RTS         ;Delay done, return
 
 .segment "VECTORS"
 .word   NMI_VEC					

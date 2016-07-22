@@ -1,10 +1,6 @@
 
 ; minimal monitor for EhBASIC and 6502 simulator V1.05
 
-; To run EhBASIC on the simulator load and assemble [F7] this file, start the simulator
-; running [F6] then start the code with the RESET [CTRL][SHIFT]R. Just selecting RUN
-; will do nothing, you'll still have to do a reset to run the code.
-
 	.include "basic.asm"
 
 ; put the IRQ and MNI code in RAM so that it can be changed
@@ -13,12 +9,11 @@ IRQ_vec	= VEC_SV+2		; IRQ code vector
 NMI_vec	= IRQ_vec+$0A	; NMI code vector
 
 
-ACIAdat = $5000
-ACIAsta = $5001
-ACIAcmd = $5002
-ACIActl = $5003
+ACIA_data = $5000
+ACIA_status = $5001
+ACIA_command = $5002
+ACIA_control = $5003
 
-; setup for the 6502 simulator environment
 
 ; now the code. all this does is set up the vectors and interrupt code
 ; and wait for the user to select [C]old or [W]arm start. nothing else
@@ -26,25 +21,22 @@ ACIActl = $5003
 
 .segment "OS"
 
-; reset vector points here
-
 ACIA_init
-	LDA #$00
-	STA ACIAsta
 	LDA #$1F
-	STA ACIActl
+	STA ACIA_control
 	LDA #$0B
-	STA ACIAcmd
-	rts
+	STA ACIA_command
+	RTS
 
+; reset vector points here
 RES_vec
 	CLD				; clear decimal mode
 	LDX	#$FF			; empty stack
 	TXS				; set the stack
 	JSR	ACIA_init
 ; set up vectors and interrupt code, copy them to page 2
-
 	LDY	#END_CODE-LAB_vec	; set index/count
+
 LAB_stlp
 	LDA	LAB_vec-1,Y		; get byte from interrupt code
 	STA	VEC_IN-1,Y		; save to RAM
@@ -52,7 +44,6 @@ LAB_stlp
 	BNE	LAB_stlp		; loop if more to do
 
 ; now do the signon message, Y = $00 here
-
 LAB_signon
 	LDA	LAB_mess,Y		; get byte from sign on message
 	BEQ	LAB_nokey		; exit loop if done
@@ -81,63 +72,39 @@ LAB_dowarm
 	JMP	LAB_WARM		; do EhBASIC warm start
 
 ; byte out to ACIA routine
-ACIAout
+ACIA_out
 	PHA
-ACIAoutretry
+ACIA_out_retry
+	LDA ACIA_status
+	AND #$10
+	BEQ ACIA_out_retry
 	PLA
-	STA	ACIAdat		; save byte to simulated ACIA
-	JSR ACIAwait
+	STA	ACIA_data	
 	RTS
 
 ; get character from ACIA routine
-ACIAin
+ACIA_in
 	CLC
-	LDA	ACIAsta		; get byte from simulated ACIA
+	LDA	ACIA_status		; get byte from simulated ACIA
 	AND #$08
-	BEQ	ACIAinend	; branch if no byte waiting
-	LDA ACIAdat
+	BEQ	ACIA_in_end	; branch if no byte waiting
+	LDA ACIA_data
 	SEC				; flag byte received
-ACIAinend
+ACIA_in_end
 	RTS
-
-ACIAwait
-	PHY
-	PHX
-
-ACIAdelayloop
-	LDY #2
-
-DELAY_LOOP
-  LDY   #2    ;Get delay value (clock rate in MHz 2 clock cycles)
-
-MINIDLY
-  LDX   #$68      ;Seed X reg
-
-DELAY_1
-  DEX         ;Decrement low index
-  BNE   DELAY_1   ;Loop back until done
-  DEY         ;Decrease by one
-  BNE   MINIDLY   ;Loop until done
-  PLX         ;Restore X Reg
-  PLY         ;Restore Y Reg
-
-DELAY_DONE
-  RTS         ;Delay done, return
 
 no_load				; empty load vector for EhBASIC
 no_save				; empty save vector for EhBASIC
 	RTS
 
 ; vector tables
-
 LAB_vec
-	.word	ACIAin		; byte in from simulated ACIA
-	.word	ACIAout		; byte out to simulated ACIA
+	.word	ACIA_in		; byte in from simulated ACIA
+	.word	ACIA_out		; byte out to simulated ACIA
 	.word	no_load		; null load vector for EhBASIC
 	.word	no_save		; null save vector for EhBASIC
 
 ; EhBASIC IRQ support
-
 IRQ_CODE
 	PHA				; save A
 	LDA	IrqBase		; get the IRQ flag byte
@@ -162,9 +129,7 @@ LAB_mess
 					; sign on string
 
 ; system vectors
-
 .segment "VECTORS"
-
 	.word	NMI_vec		; NMI vector
 	.word	RES_vec		; RESET vector
 	.word	IRQ_vec		; IRQ vector
